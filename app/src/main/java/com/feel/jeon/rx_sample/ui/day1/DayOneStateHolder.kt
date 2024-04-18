@@ -163,12 +163,18 @@ class DayOneStateHolder {
 
     // 특정 시간동안 지연시킨 뒤 아이템 발행하고 종료
     fun timer() {
-        Observable.timer(5, TimeUnit.SECONDS)
-            .subscribe {
-                Logger.e("Timer 끝!")
-            }
+        Thread(
+            Runnable {
+                val timer = Observable.timer(5, TimeUnit.SECONDS)
+                    .subscribe {
+                        Logger.e("Timer 끝!")
+                    }
 
-        Logger.e("시작!")
+                Thread.sleep(6000L)
+                Logger.e("시작!")
+                timer.dispose()
+            }
+        ).start()
     }
 
     // defer 연산자는 observer가 구독할 때까지 observable 생성을 지연시킴.

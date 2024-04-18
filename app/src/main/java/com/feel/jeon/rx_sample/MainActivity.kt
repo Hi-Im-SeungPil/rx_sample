@@ -3,11 +3,29 @@ package com.feel.jeon.rx_sample
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import com.feel.jeon.rx_sample.ui.day1.DayOneScreen
+import com.feel.jeon.rx_sample.ui.day2.DayTwoScreen
+import com.feel.jeon.rx_sample.ui.day3.DayThreeScreen
+import com.feel.jeon.rx_sample.ui.day4.DayFourScreen
+import com.feel.jeon.rx_sample.ui.day5.DayFiveScreen
 import com.feel.jeon.rx_sample.ui.theme.Rx_sampleTheme
 import com.orhanobut.logger.AndroidLogAdapter
 import com.orhanobut.logger.BuildConfig
@@ -15,14 +33,13 @@ import com.orhanobut.logger.Logger
 
 
 class MainActivity : ComponentActivity() {
+    private val pageState = mutableIntStateOf(1)
+    private val titleState = mutableStateOf("Day1")
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Logger.addLogAdapter(object : AndroidLogAdapter() {
-            override fun isLoggable(priority: Int, tag: String?): Boolean {
-                return BuildConfig.DEBUG
-            }
-        })
-        Logger.addLogAdapter(AndroidLogAdapter())
+        initLogger()
+
         setContent {
             Rx_sampleTheme {
                 // A surface container using the 'background' color from the theme
@@ -30,9 +47,58 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    DayOneScreen()
+                    Scaffold(
+                        topBar = {
+                            MainTopAppBar()
+                        }
+                    ) { paddingValue ->
+                        Box(modifier = Modifier.padding(paddingValue)) {
+                            when (pageState.intValue) {
+                                1 -> DayOneScreen()
+                                2 -> DayTwoScreen()
+                                3 -> DayThreeScreen()
+                                4 -> DayFourScreen()
+                                5 -> DayFiveScreen()
+                            }
+                        }
+                    }
                 }
             }
         }
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun MainTopAppBar() {
+        TopAppBar(title = { Text(text = "Day ${pageState.intValue}") },
+            navigationIcon = {
+                IconButton(onClick = {
+                    if (pageState.intValue > 1) {
+                        pageState.intValue -= 1
+                        titleState.value = "Day${pageState.intValue}"
+                    }
+                }) {
+                    Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "")
+                }
+            },
+            actions = {
+                IconButton(onClick = {
+                    if (pageState.intValue < 7) {
+                        pageState.intValue += 1
+                        titleState.value = "Day${pageState.intValue}"
+                    }
+                }) {
+                    Icon(imageVector = Icons.Default.ArrowForward, contentDescription = "")
+                }
+            })
+    }
+
+    private fun initLogger() {
+        Logger.addLogAdapter(object : AndroidLogAdapter() {
+            override fun isLoggable(priority: Int, tag: String?): Boolean {
+                return BuildConfig.DEBUG
+            }
+        })
+        Logger.addLogAdapter(AndroidLogAdapter())
     }
 }
