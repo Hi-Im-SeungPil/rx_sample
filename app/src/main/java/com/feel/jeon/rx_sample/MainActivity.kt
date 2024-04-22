@@ -26,10 +26,16 @@ import com.feel.jeon.rx_sample.ui.day2.DayTwoScreen
 import com.feel.jeon.rx_sample.ui.day3.DayThreeScreen
 import com.feel.jeon.rx_sample.ui.day4.DayFourScreen
 import com.feel.jeon.rx_sample.ui.day5.DayFiveScreen
+import com.feel.jeon.rx_sample.ui.retrofit_rx.AppRetrofit
 import com.feel.jeon.rx_sample.ui.theme.Rx_sampleTheme
 import com.orhanobut.logger.AndroidLogAdapter
 import com.orhanobut.logger.BuildConfig
 import com.orhanobut.logger.Logger
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.core.Scheduler
+import io.reactivex.rxjava3.kotlin.subscribeBy
+import io.reactivex.rxjava3.schedulers.Schedulers
+import org.jetbrains.annotations.Async.Schedule
 
 
 class MainActivity : ComponentActivity() {
@@ -39,6 +45,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         initLogger()
+
+        AppRetrofit.upbitApi.getMarketCode().subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread()).subscribeBy(
+                onSuccess = {
+                            Logger.e(it.toString())
+                },
+                onError = {
+                    Logger.e(it.message.toString())
+                }
+            ).dispose()
 
         setContent {
             Rx_sampleTheme {
@@ -83,7 +99,7 @@ class MainActivity : ComponentActivity() {
             },
             actions = {
                 IconButton(onClick = {
-                    if (pageState.intValue < 7) {
+                    if (pageState.intValue < 6) {
                         pageState.intValue += 1
                         titleState.value = "Day${pageState.intValue}"
                     }

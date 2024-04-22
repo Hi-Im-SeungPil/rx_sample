@@ -146,12 +146,16 @@ class DayOneStateHolder {
 
     // 구독을 중기하기 전까지 무한 발행.
     fun interval() {
-        val intervalObservable = Observable.interval(1, TimeUnit.SECONDS)
-            .subscribe {
-                Logger.e(it.toString())
+        Thread(
+            Runnable {
+                val intervalObservable = Observable.interval(1, TimeUnit.SECONDS)
+                    .subscribe {
+                        Logger.e(it.toString())
+                    }
+                Thread.sleep(5000)
+                intervalObservable.dispose() // 아이템 발행 중단
             }
-        Thread.sleep(5000)
-        intervalObservable.dispose() // 아이템 발행 중단
+        )
     }
 
     fun range() {
@@ -180,31 +184,33 @@ class DayOneStateHolder {
     // defer 연산자는 observer가 구독할 때까지 observable 생성을 지연시킴.
     // subscribe 매서드를 사용해 구독을 요청해야지만 observable 아이템을 생성한다.
     fun defer() {
-        val justSrc = Observable.just(
-            System.currentTimeMillis()
-        )
-        val deferSrc = Observable.defer {
-            Observable.just(System.currentTimeMillis())
-        }
+        Thread(Runnable {
+            val justSrc = Observable.just(
+                System.currentTimeMillis()
+            )
+            val deferSrc = Observable.defer {
+                Observable.just(System.currentTimeMillis())
+            }
 
 // 현재 시간 출력
-        Logger.e("#1 now = ${System.currentTimeMillis()}")
-        try {
-            Thread.sleep(5000)
-        } catch (ie: InterruptedException) {
-            ie.printStackTrace()
-        }
-        Logger.e("#2 now = ${System.currentTimeMillis()}")
+            Logger.e("#1 now = ${System.currentTimeMillis()}")
+            try {
+                Thread.sleep(5000)
+            } catch (ie: InterruptedException) {
+                ie.printStackTrace()
+            }
+            Logger.e("#2 now = ${System.currentTimeMillis()}")
 
 // just만을 사용하여 바로 아이템 발행 -> #1 now와 비슷
-        justSrc.subscribe {
-            Logger.e("#1 time = $it")
-        }.dispose()
+            justSrc.subscribe {
+                Logger.e("#1 time = $it")
+            }.dispose()
 
 // defer를 사용하여 구독이 들어왔을 때 아이템 발행 -> #2 now와 비슷
-        deferSrc.subscribe {
-            Logger.e("#2 time = $it")
-        }.dispose()
+            deferSrc.subscribe {
+                Logger.e("#2 time = $it")
+            }.dispose()
+        })
     }
 
     /**
@@ -242,22 +248,24 @@ class DayOneStateHolder {
      */
 
     fun disposable() {
-        val observable = Observable.interval(1, TimeUnit.SECONDS)
-        val disposable = observable.subscribe {
-            Logger.e(it.toString())
-        }.let {
-            Thread().apply {
-                try {
-                    Thread.sleep(3500)
-                } catch (ie: InterruptedException) {
-                    ie.printStackTrace()
-                }
-                // 아이템 발행 해제
-                it.dispose()
-            }.start()
-        }
+        Thread(Runnable {
+            val observable = Observable.interval(1, TimeUnit.SECONDS)
+            val disposable = observable.subscribe {
+                Logger.e(it.toString())
+            }.let {
+                Thread().apply {
+                    try {
+                        Thread.sleep(3500)
+                    } catch (ie: InterruptedException) {
+                        ie.printStackTrace()
+                    }
+                    // 아이템 발행 해제
+                    it.dispose()
+                }.start()
+            }
+        })
 
-        // 한꺼번에 리소스 해제 가능.
+// 한꺼번에 리소스 해제 가능.
 
 //    val observable = Observable.interval(1, TimeUnit.SECONDS)
 //    // 1초에 한 번씩 아이템 발행(무한히)
@@ -291,24 +299,28 @@ class DayOneStateHolder {
      */
 
     fun connectableObservable() {
-        val connectableObservable = Observable.interval(1, TimeUnit.SECONDS).publish()
+        Thread(
+            Runnable {
+                val connectableObservable = Observable.interval(1, TimeUnit.SECONDS).publish()
 // 1번 구독자 등록
-        connectableObservable.connect()
-        val connectableObserver1 = connectableObservable.subscribe {
-            println("#1: $it")
-        }
-        Thread.sleep(3000)
+                connectableObservable.connect()
+                val connectableObserver1 = connectableObservable.subscribe {
+                    println("#1: $it")
+                }
+                Thread.sleep(3000)
 
 // 2번 구독자 등록
-        val connectableObserver2 = connectableObservable.subscribe {
-            println("#2: $it")
-        }
+                val connectableObserver2 = connectableObservable.subscribe {
+                    println("#2: $it")
+                }
 
-        Thread.sleep(3000)
+                Thread.sleep(3000)
 
-        val compositeDisposable = CompositeDisposable()
-        compositeDisposable.addAll(connectableObserver1, connectableObserver2)
-        compositeDisposable.dispose()
+                val compositeDisposable = CompositeDisposable()
+                compositeDisposable.addAll(connectableObserver1, connectableObserver2)
+                compositeDisposable.dispose()
+            }
+        )
     }
 
     /**
